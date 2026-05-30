@@ -75,6 +75,8 @@ export default defineSchema({
     endDate: v.optional(v.string()),
     nextRun: v.string(),
     active: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
   })
   .index('by_user', ['userId'])
   .index('by_active_nextRun', ['active', 'nextRun']),
@@ -84,6 +86,8 @@ export default defineSchema({
     categoryId: v.id('categories'),
     month: v.string(),
     amount: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
   })
   .index('by_user_month', ['userId', 'month'])
   .index('by_user_cat_month', ['userId', 'categoryId', 'month']),
@@ -100,15 +104,17 @@ export default defineSchema({
     completedAt: v.optional(v.number()),
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
   })
   .index('by_user', ['userId']),
 
-  goalDeposits: defineTable({
+  goalMovements: defineTable({
     userId: v.id('users'),
     goalId: v.id('goals'),
     amount: v.number(),
     date: v.string(),
     note: v.optional(v.string()),
+    type: v.union(v.literal('deposit'), v.literal('withdrawal')),
     createdAt: v.number(),
   })
   .index('by_goal_date', ['goalId', 'date']),

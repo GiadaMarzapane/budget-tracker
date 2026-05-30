@@ -1,60 +1,57 @@
-import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getCurrentUser } from "./auth";
+import { v } from "convex/values";
 
 export const list = query({
   args: {
-    month: v.optional(v.string())
+    active: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
     let q = ctx.db
-    .query('transactions')
-    .withIndex('by_user_date', (q) => q.eq('userId', user._id))
-    .order('desc');
-
-    if (args.month) {
-      q = q.filter((q) =>
-        q.and(q.gte(q.field('date'), `${args.month}-01`),
-        q.lte(q.field('date'), `${args.month}-31`))
-      );
-    }
-
-    return await q.take(50);
-  },
+    .query('recurringRules')
+    .withIndex('by_user', (q) => q.eq('userId', user._id))
+    .order('asc');
+  }
 });
 
 export const create = mutation({
   args: {
     type: v.union(v.literal('in'), v.literal('out')),
     amount: v.number(),
-    date: v.string(),
     categoryId: v.optional(v.id('categories')),
     description: v.string(),
-    note: v.optional(v.string()),
-    recurringId: v.optional(v.id('recurringRules')),
+    frequency: v.union(v.literal('daily'), v.literal('weekly'), v.literal('monthly'), v.literal('yearly')),
+    interval: v.number(),
+    dayOfMonth: v.optional(v.number()),
+    dayOfWeek: v.optional(v.number()),
+    startDate: v.string(),
+    endDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
-    return await ctx.db.insert('transactions', {
+    return await ctx.db.insert('recurringRules', {
       userId: user._id,
-      currency: user.currency,
+      nextRun: args.startDate,
+      active: true,
       createdAt: Date.now(),
+      updatedAt: Date.now(),
       ...args,
-    })
+    });
   }
 });
 
 export const update = mutation({
   args: {
-    id: v.id('transactions'),
+    id: v.id('recurringRules'),
     type: v.optional(v.union(v.literal('in'), v.literal('out'))),
     amount: v.optional(v.number()),
-    date: v.optional(v.string()),
     categoryId: v.optional(v.id('categories')),
     description: v.optional(v.string()),
-    note: v.optional(v.string()),
-    recurringId: v.optional(v.id('recurringRules')),
+    frequency: v.optional(v.union(v.literal('daily'), v.literal('weekly'), v.literal('monthly'), v.literal('yearly'))),
+    interval: v.optional(v.number()),
+    dayOfMonth: v.optional(v.number()),
+    dayOfWeek: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.patch(args.id, {
@@ -63,12 +60,3 @@ export const update = mutation({
     });
   }
 });
-
-export const remove = mutation({
-  args: {
-    id: v.id('transactions'),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db.delete(args.id);
-  }
-})
