@@ -1,0 +1,19 @@
+# dependencies
+node_modules
+dist
+dist-ssr
+*.local
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# convex generated code
+convex/_generated
+
+# env
+.env
+.env.local
+.env.*.local
