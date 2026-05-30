@@ -20,6 +20,7 @@ export default defineSchema({
     weekStart: v.union(v.literal('mon'), v.literal('sun')),
     theme: v.union(v.literal('light'), v.literal('dark'), v.literal('auto')),
     createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
   })
   .index('by_token', ['tokenIdentifier']),
 
@@ -32,6 +33,8 @@ export default defineSchema({
     isSystem: v.boolean(),
     archivedAt: v.optional(v.number()),
     order: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
   })
   .index('by_user', ['userId'])
   .index('by_user_slug', ['userId', 'slug']),
