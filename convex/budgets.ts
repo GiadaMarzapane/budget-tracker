@@ -1,5 +1,5 @@
 import { query, mutation } from "./_generated/server";
-import { getCurrentUser } from "./auth";
+import { assertOwner, getCurrentUser } from "./auth";
 import { v } from "convex/values";
 
 export const list = query({
@@ -46,8 +46,10 @@ export const update = mutation({
     amount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.patch(args.id, {
-      ...args,
+    await assertOwner(ctx, "budgets", args.id);
+    const { id, ...updates } = args;
+    return await ctx.db.patch(id, {
+      ...updates,
       updatedAt: Date.now(),
     });
   },
@@ -58,6 +60,7 @@ export const remove = mutation({
     id: v.id('budgets'),
   },
   handler: async (ctx, args) => {
+    await assertOwner(ctx, "budgets", args.id);
     return await ctx.db.delete(args.id);
   },
 });

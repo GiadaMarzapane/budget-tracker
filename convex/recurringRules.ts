@@ -1,5 +1,5 @@
 import { query, mutation } from "./_generated/server";
-import { getCurrentUser } from "./auth";
+import { assertOwner, getCurrentUser } from "./auth";
 import { v } from "convex/values";
 
 export const list = query({
@@ -12,7 +12,13 @@ export const list = query({
     .query('recurringRules')
     .withIndex('by_user', (q) => q.eq('userId', user._id))
     .order('asc');
-  }
+
+    if (args.active !== undefined) {
+      q = q.filter((q) => q.eq(q.field('active'), args.active));
+    }
+
+    return await q.collect();
+  },
 });
 
 export const create = mutation({
@@ -54,9 +60,11 @@ export const update = mutation({
     dayOfWeek: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.patch(args.id, {
-      ...args,
+    await assertOwner(ctx, "recurringRules", args.id);
+    const { id, ...updates } = args;
+    return await ctx.db.patch(id, {
+      ...updates,
       updatedAt: Date.now(),
     });
-  }
+  },
 });

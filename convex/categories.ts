@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { getCurrentUser } from "./auth";
+import { assertOwner, getCurrentUser } from "./auth";
 
 export const list = query({
   args: {
@@ -51,11 +51,13 @@ export const update = mutation({
     order: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.patch(args.id, {
-      ...args,
+    await assertOwner(ctx, "categories", args.id);
+    const { id, ...updates } = args;
+    return await ctx.db.patch(id, {
+      ...updates,
       updatedAt: Date.now(),
     });
-  }
+  },
 });
 
 export const archive = mutation({
@@ -63,11 +65,12 @@ export const archive = mutation({
     id: v.id('categories'),
   },
   handler: async (ctx, args) => {
+    await assertOwner(ctx, "categories", args.id);
     return await ctx.db.patch(args.id, {
       archivedAt: Date.now(),
       updatedAt: Date.now(),
     });
-  }
+  },
 });
 
 export const restore = mutation({
@@ -75,9 +78,10 @@ export const restore = mutation({
     id: v.id('categories'),
   },
   handler: async (ctx, args) => {
+    await assertOwner(ctx, "categories", args.id);
     return await ctx.db.patch(args.id, {
       archivedAt: undefined,
       updatedAt: Date.now(),
     });
-  }
-})
+  },
+});

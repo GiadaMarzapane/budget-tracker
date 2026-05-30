@@ -1,5 +1,5 @@
 import { query, mutation } from "./_generated/server";
-import { getCurrentUser } from "./auth";
+import { assertOwner, getCurrentUser } from "./auth";
 import { v } from "convex/values";
 
 export const list = query({
@@ -25,6 +25,7 @@ export const create = mutation({
   args: {
     name: v.string(),
     targetAmount: v.number(),
+    currentAmount: v.number(),
     monthlyAmount: v.optional(v.number()),
     deadline: v.optional(v.string()),
     swatch: v.union(v.literal('lavender'), v.literal('pink'), v.literal('blush'), v.literal('cream'), v.literal('mint')),
@@ -36,7 +37,7 @@ export const create = mutation({
       userId: user._id,
       name: args.name,
       targetAmount: args.targetAmount,
-      currentAmount: 0,
+      currentAmount: args.currentAmount,
       monthlyAmount: args.monthlyAmount,
       deadline: args.deadline,
       swatch: args.swatch,
@@ -52,15 +53,16 @@ export const update = mutation({
     id: v.id('goals'),
     name: v.optional(v.string()),
     targetAmount: v.optional(v.number()),
-    currentAmount: v.optional(v.number()),
     monthlyAmount: v.optional(v.number()),
     deadline: v.optional(v.string()),
     swatch: v.optional(v.union(v.literal('lavender'), v.literal('pink'), v.literal('blush'), v.literal('cream'), v.literal('mint'))),
     icon: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.patch(args.id, {
-      ...args,
+    await assertOwner(ctx, "goals", args.id);
+    const { id, ...updates } = args;
+    return await ctx.db.patch(id, {
+      ...updates,
       updatedAt: Date.now(),
     });
   },
@@ -71,6 +73,7 @@ export const archive = mutation({
     id: v.id('goals'),
   },
   handler: async (ctx, args) => {
+    await assertOwner(ctx, "goals", args.id);
     return await ctx.db.patch(args.id, {
       archivedAt: Date.now(),
       updatedAt: Date.now(),

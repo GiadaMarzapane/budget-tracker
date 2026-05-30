@@ -9,16 +9,25 @@ const swatch = v.union(
   v.literal('mint'),
 );
 
+const userBadge = v.object({
+  badgeId: v.id('badges'),
+  progress: v.number(),
+  completedAt: v.optional(v.number()),
+});
+
 export default defineSchema({
   users: defineTable({
     tokenIdentifier: v.string(),
     email: v.string(),
     name: v.string(),
+    role: v.union(v.literal('admin'), v.literal('user'), v.literal('premium_user')),
     avatarUrl: v.optional(v.string()),
     currency: v.union(v.literal('EUR'), v.literal('USD'), v.literal('GBP')),
     locale: v.string(),
     weekStart: v.union(v.literal('mon'), v.literal('sun')),
+    lockKey: v.optional(v.string()),
     theme: v.union(v.literal('light'), v.literal('dark'), v.literal('auto')),
+    badges: v.array(userBadge),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
@@ -118,4 +127,15 @@ export default defineSchema({
     createdAt: v.number(),
   })
   .index('by_goal_date', ['goalId', 'date']),
+
+  badges: defineTable({
+    name: v.string(),
+    description: v.string(),
+    category: v.string(),
+    target: v.number(),
+    icon: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+  .index('by_name', ['name']),
 });
