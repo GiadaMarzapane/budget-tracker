@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 const swatch = v.union(
   v.literal('lavender'),
@@ -16,22 +17,29 @@ const userBadge = v.object({
 });
 
 export default defineSchema({
+  ...authTables,
   users: defineTable({
-    tokenIdentifier: v.string(),
-    email: v.string(),
-    name: v.string(),
-    role: v.union(v.literal('admin'), v.literal('user'), v.literal('premium_user')),
+      // ── Convex Auth (obbligatori) ──
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),           // Google mette l'avatar qui
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.number()),
+    isAnonymous: v.optional(v.boolean()),
+      // ── Campi app (optional all'inizio) ──
+    role: v.optional(v.union(v.literal('admin'), v.literal('user'), v.literal('premium_user'))),
     avatarUrl: v.optional(v.string()),
-    currency: v.union(v.literal('EUR'), v.literal('USD'), v.literal('GBP')),
-    locale: v.string(),
-    weekStart: v.union(v.literal('mon'), v.literal('sun')),
+    currency: v.optional(v.union(v.literal('EUR'), v.literal('USD'), v.literal('GBP'))),
+    locale: v.optional(v.string()),
+    weekStart: v.optional(v.union(v.literal('mon'), v.literal('sun'))),
     lockKey: v.optional(v.string()),
-    theme: v.union(v.literal('light'), v.literal('dark'), v.literal('auto')),
-    badges: v.array(userBadge),
-    createdAt: v.number(),
+    theme: v.optional(v.union(v.literal('light'), v.literal('dark'), v.literal('auto'))),
+    badges: v.optional(v.array(userBadge)),
     updatedAt: v.optional(v.number()),
   })
-  .index('by_token', ['tokenIdentifier']),
+  .index('email', ['email'])
+  .index('phone', ['phone']),
 
   categories: defineTable({
     userId: v.id('users'),
@@ -42,7 +50,6 @@ export default defineSchema({
     isSystem: v.boolean(),
     archivedAt: v.optional(v.number()),
     order: v.optional(v.number()),
-    createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
   .index('by_user', ['userId'])
@@ -58,7 +65,6 @@ export default defineSchema({
     description: v.string(),
     note: v.optional(v.string()),
     recurringId: v.optional(v.id('recurringRules')),
-    createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
   .index('by_user_date', ['userId', 'date'])
@@ -84,7 +90,6 @@ export default defineSchema({
     endDate: v.optional(v.string()),
     nextRun: v.string(),
     active: v.boolean(),
-    createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
   .index('by_user', ['userId'])
@@ -95,7 +100,6 @@ export default defineSchema({
     categoryId: v.id('categories'),
     month: v.string(),
     amount: v.number(),
-    createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
   .index('by_user_month', ['userId', 'month'])
@@ -112,7 +116,6 @@ export default defineSchema({
     icon: v.string(),
     completedAt: v.optional(v.number()),
     archivedAt: v.optional(v.number()),
-    createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
   .index('by_user', ['userId']),
@@ -124,7 +127,6 @@ export default defineSchema({
     date: v.string(),
     note: v.optional(v.string()),
     type: v.union(v.literal('deposit'), v.literal('withdrawal')),
-    createdAt: v.number(),
   })
   .index('by_goal_date', ['goalId', 'date']),
 
@@ -134,7 +136,6 @@ export default defineSchema({
     category: v.string(),
     target: v.number(),
     icon: v.string(),
-    createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
   .index('by_name', ['name']),

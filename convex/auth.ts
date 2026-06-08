@@ -1,15 +1,39 @@
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 import type { Id, TableNames } from "./_generated/dataModel";
+import Google from "@auth/core/providers/google";
+import { convexAuth, getAuthUserId } from "@convex-dev/auth/server";
+ 
+export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    })
+  ],
+  callbacks: {
+    async afterUserCreatedOrUpdated(ctx, {userId, existingUserId}) {
+      if (existingUserId) {
+        return;
+      }
+
+      await ctx.db.patch(userId, {
+        role: "user",
+        currency: "EUR",
+        locale: "it-IT",
+        weekStart: "mon",
+        theme: "light",
+        badges: [],
+        updatedAt: Date.now(),
+      })
+    }
+  }
+});
 
 export async function getCurrentUser(ctx: QueryCtx | MutationCtx) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error('Not authenticated');
-  
-  const user = await ctx.db
-    .query('users')
-    .withIndex('by_token', (q) => q.eq('tokenIdentifier', identity.tokenIdentifier))
-    .unique(); // restituisce null se non trovato, errore se ne trova >1
+  const userId = await getAuthUserId(ctx);
+  if (!userId) throw new Error('Not authenticated');
 
+  const user = await ctx.db.get(userId);
   if (!user) throw new Error('User not found');
 
   return user;

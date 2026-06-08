@@ -1,62 +1,23 @@
-// src/App.tsx
-// Top-level orchestrator: chooses the active screen and mounts the modal.
-// Replace `useScreen` with a real router once you have multiple URLs.
-
-import { useState } from 'react';
-import { useScreen } from '@/hooks/useScreen';
-import {
-  CategoriesScreen,
-  DashboardScreen,
-  GoalsScreen,
-  NewTransactionModal,
-  OnboardingScreen,
-  SettingsScreen,
-  StatsScreen,
-  TransactionsScreen,
-} from '@/components/screens';
+import { useConvexAuth } from "@convex-dev/auth/react";
+import { LoginPage } from "./pages/LoginPages";
+import { AppScreens } from "./pages/AppScreens";
 
 export default function App() {
-  const [screen, go] = useScreen('onboarding');
-  const [modal, setModal] = useState<'newtx' | null>(null);
+  const { isAuthenticated, isLoading } = useConvexAuth();
 
-  const openNewTx = () => setModal('newtx');
-  const closeModal = () => setModal(null);
-  const navigate = (s: Parameters<typeof go>[0]) => {
-    go(s);
-    closeModal();
-  };
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center text-ink-muted">
+        Caricamento...
+      </div>
+    )
+  }
 
-  let current;
-  switch (screen) {
-    case 'onboarding':
-      current = <OnboardingScreen onLogin={() => navigate('dashboard')} />;
-      break;
-    case 'dashboard':
-      current = <DashboardScreen go={navigate} openNewTx={openNewTx} />;
-      break;
-    case 'tx':
-      current = <TransactionsScreen go={navigate} openNewTx={openNewTx} />;
-      break;
-    case 'categories':
-      current = <CategoriesScreen go={navigate} openNewTx={openNewTx} />;
-      break;
-    case 'goals':
-      current = <GoalsScreen go={navigate} openNewTx={openNewTx} />;
-      break;
-    case 'stats':
-      current = <StatsScreen go={navigate} openNewTx={openNewTx} />;
-      break;
-    case 'settings':
-      current = <SettingsScreen go={navigate} openNewTx={openNewTx} />;
-      break;
-    default:
-      current = <DashboardScreen go={navigate} openNewTx={openNewTx} />;
+  if (!isAuthenticated) {
+    return <LoginPage />;
   }
 
   return (
-    <div className="h-full w-full">
-      {current}
-      {modal === 'newtx' ? <NewTransactionModal onClose={closeModal} /> : null}
-    </div>
+    <AppScreens />
   );
 }
