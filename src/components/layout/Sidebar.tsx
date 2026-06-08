@@ -3,6 +3,7 @@
 import type { ScreenId, IconName } from '@/lib/types';
 import { Avatar, ClayCard, Eyebrow, Icon, IconButton } from '@/components/ui';
 import { cn } from '@/lib/utils';
+import { useAuthActions } from '@convex-dev/auth/react';
 
 interface NavItem {
   id: ScreenId;
@@ -30,6 +31,12 @@ export function Sidebar({
   onNavigate,
   user = { name: 'Marco R.', email: 'marco@mail.it' },
 }: SidebarProps) {
+  const { signOut } = useAuthActions();
+
+  const handleLogout = async () => {
+    localStorage.removeItem('bt-screen');
+    await signOut();
+  }
   return (
     <aside className="flex h-full w-60 flex-shrink-0 flex-col gap-2 border-r border-line bg-white/50 p-4 backdrop-blur-lg">
       {/* Brand */}
@@ -71,7 +78,7 @@ export function Sidebar({
             </div>
             <div className="truncate text-[11px] text-ink-soft">{user.email}</div>
           </div>
-          <IconButton name="logout" size={28} variant="ghost" ariaLabel="Esci" />
+          <IconButton name="logout" size={28} variant="ghost" ariaLabel="Esci" onClick={() => signOut()} />
         </ClayCard>
       </div>
     </aside>
